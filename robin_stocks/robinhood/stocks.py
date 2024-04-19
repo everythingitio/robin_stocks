@@ -195,6 +195,26 @@ def get_instrument_by_url(url, info=None):
     return(filter_data(data, info))
 
 
+def get_latest_price_adjusted(inputSymbols, percent, priceType=None, includeExtendedHours=True):
+    
+    """Takes any number of stock tickers and returns the latest price of each one as a string.
+
+    :param inputSymbols: May be a single stock ticker or a list of stock tickers.
+    :type inputSymbols: str or list
+    :param percent: Percent multiplier e.g. 0.01 or -0.01
+    :type percent: float
+    returns: [list]  A list of prices as float.
+    """
+
+    prices = get_latest_price(inputSymbols, priceType, includeExtendedHours)
+    adjusted_prices = []
+    for item in prices:
+        prc = float(item)
+        price = float(prc + (prc*percent))
+        adjusted_prices.append(price)
+    return adjusted_prices
+
+
 def get_latest_price(inputSymbols, priceType=None, includeExtendedHours=True):
     """Takes any number of stock tickers and returns the latest price of each one as a string.
 

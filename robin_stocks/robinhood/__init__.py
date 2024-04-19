@@ -69,7 +69,7 @@ from .profiles import (load_account_profile, load_basic_profile,
                        load_security_profile, load_user_profile)
 from .stocks import (find_instrument_data, get_earnings, get_events,
                      get_fundamentals, get_instrument_by_url,
-                     get_instruments_by_symbols, get_latest_price,
+                     get_instruments_by_symbols, get_latest_price, get_latest_price_adjusted, 
                      get_name_by_symbol, get_name_by_url, get_news,
                      get_pricebook_by_id, get_pricebook_by_symbol, get_quotes,
                      get_ratings, get_splits, get_stock_historicals,

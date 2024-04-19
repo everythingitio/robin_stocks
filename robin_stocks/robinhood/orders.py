@@ -6,6 +6,7 @@ from robin_stocks.robinhood.helper import *
 from robin_stocks.robinhood.profiles import *
 from robin_stocks.robinhood.stocks import *
 from robin_stocks.robinhood.urls import *
+import json
 
 @login_required
 def get_all_stock_orders(info=None):
@@ -384,7 +385,7 @@ def order_buy_fractional_by_price(symbol, amountInDollars, account_number=None, 
 
 
 @login_required
-def order_buy_limit(symbol, quantity, limitPrice, account_number=None, timeInForce='gtc', extendedHours=False, jsonify=True):
+def order_buy_limit(symbol, quantity, limitPrice, account_number=None, timeInForce='gfd', extendedHours=False, jsonify=True, market_hours='regular_hours'):
     """Submits a limit order to be executed once a certain price is reached.
 
     :param symbol: The stock ticker of the stock to purchase.
@@ -407,7 +408,7 @@ def order_buy_limit(symbol, quantity, limitPrice, account_number=None, timeInFor
     the price, and the quantity.
 
     """ 
-    return order(symbol, quantity, "buy", account_number, limitPrice, None, timeInForce, extendedHours, jsonify)
+    return order(symbol, quantity, "buy", limitPrice, None, account_number, timeInForce, extendedHours, jsonify, market_hours)
 
 
 @login_required
@@ -581,7 +582,7 @@ def order_sell_fractional_by_price(symbol, amountInDollars, account_number=None,
 
 
 @login_required
-def order_sell_limit(symbol, quantity, limitPrice, account_number=None, timeInForce='gtc', extendedHours=False, jsonify=True):
+def order_sell_limit(symbol, quantity, limitPrice, account_number=None, timeInForce='gfd', extendedHours=False, jsonify=True, market_hours='extended_hours'):
     """Submits a limit order to be executed once a certain price is reached.
 
     :param symbol: The stock ticker of the stock to sell.
@@ -604,7 +605,7 @@ def order_sell_limit(symbol, quantity, limitPrice, account_number=None, timeInFo
     the price, and the quantity.
 
     """ 
-    return order(symbol, quantity, "sell", account_number, limitPrice, None, timeInForce, extendedHours, jsonify)
+    return order(symbol, quantity, "sell", limitPrice, None, account_number, timeInForce, extendedHours, jsonify, market_hours)
 
 
 @login_required
@@ -631,7 +632,8 @@ def order_sell_stop_loss(symbol, quantity, stopPrice, account_number=None, timeI
     the price, and the quantity.
 
     """ 
-    return order(symbol, quantity, "sell", account_number, None, stopPrice, timeInForce, extendedHours, jsonify)
+    # return order(symbol, quantity, "sell", account_number, None, stopPrice, timeInForce, extendedHours, jsonify)
+    return order(symbol, quantity, "sell", None, stopPrice, None, timeInForce, extendedHours, jsonify)
 
 
 @login_required
@@ -845,14 +847,16 @@ def order(symbol, quantity, side, limitPrice=None, stopPrice=None, account_numbe
         'time_in_force': timeInForce,
         'trigger': trigger,
         'side': side,
-        'market_hours': market_hours, # choices are ['regular_hours', 'all_day_hours']
+        'market_hours': market_hours, # choices are ['regular_hours', 'all_day_hours', 'extended_hours']
         'extended_hours': extendedHours,
         'order_form_version': 4
     }
+    print(json.dumps(payload, indent=4))
     # adjust market orders
     if orderType == 'market':
-        del payload['stop_price']
         del payload['extended_hours'] 
+        if trigger != 'stop':
+            del payload['stop_price']
         
     if market_hours == 'regular_hours':
         if side == "buy":
@@ -864,9 +868,14 @@ def order(symbol, quantity, side, limitPrice=None, stopPrice=None, account_numbe
     elif market_hours == 'all_day_hours': 
         payload['type'] = 'limit' 
         payload['quantity']=int(payload['quantity']) # round to integer instead of fractional
+    elif market_hours == 'extended_hours': 
+        del payload['stop_price']
+        payload['type'] = 'limit' 
+        payload['market_hours'] = 'extended_hours'
+        payload['trigger'] = 'immediate'
         
     url = orders_url()
-
+    print(json.dumps(payload, indent=4))
     data = request_post(url, payload, jsonify_data=jsonify)
 
     return(data)
